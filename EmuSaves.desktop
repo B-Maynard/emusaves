@@ -1,0 +1,7 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=EmuSaves File Transfer
+Exec=pyton <(curl https://raw.githubusercontent.com/b-maynard/emusaves/main/EmuSaveFileTransfer.py)
+Terminal=true
+Type=Application
+StartupNotify=false
