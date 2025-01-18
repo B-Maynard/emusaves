@@ -142,17 +142,32 @@ class SaveBackupApp:
             messagebox.showerror("Error", "Base folder not initialized!")
             return
 
+        token = self.global_config.get("dropbox_token", "").strip()
+        if not token:
+            messagebox.showerror("Error", "Dropbox token not configured globally!")
+            return
+
+        self.dbx = dropbox.Dropbox(token)
+
+        try:
+            entries = self.dbx.files_list_folder(f"/{self.base_folder}").entries
+            existing_folders = [entry.name for entry in entries if isinstance(entry, dropbox.files.FolderMetadata)]
+
+            if config_name in existing_folders:
+                use_existing = messagebox.askyesno("Folder Exists", f"A folder named '{config_name}' already exists in Dropbox. Use it as the configuration folder?")
+                if not use_existing:
+                    messagebox.showinfo("Cancelled", "Configuration not saved.")
+                    return
+            else:
+                self.dbx.files_create_folder_v2(f"/{self.base_folder}/{config_name}")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to check or create folder: {e}")
+            return
+
         config = {
             "save_path": self.path_entry.get().strip()
         }
-
-        folder_path = f"/{self.base_folder}/{config_name}"
-        try:
-            self.dbx.files_create_folder_v2(folder_path)
-        except dropbox.exceptions.ApiError as e:
-            if not str(e).startswith("folder_conflict"):
-                messagebox.showerror("Error", f"Failed to create folder for config: {e}")
-                return
 
         save_config(config_name, config)
         self.configs[config_name] = config
